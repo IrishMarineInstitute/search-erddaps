@@ -34,7 +34,7 @@
 					    <label for="search">Search Datasets</label>
 					    <input type="text" class="form-control" id="search" aria-describedby="searchHelp" placeholder="Enter some text...">
 					    <small id="searchHelp" class="form-text text-muted">Type some words about the dataset you seek, then press the green button</small>
-					  <button id="searchDatasetsButton" class="btn btn-success" onclick="searchDatasets()">Search</button>
+					  <button id="searchDatasetsButton" class="btn btn-success">Search</button>
 					  <button id="clearButton" onclick="clearSearchDatasets()" class="btn btn-info">Clear</button>
 					  </div>
 					  <div class="row" id="searchInfo"></div>
@@ -74,6 +74,9 @@
 					erddaps.search(getSearchValue());
 				}
 			};
+			document.getElementById('searchDatasetsButton').onclick = function(){
+				erddaps.search(getSearchValue());
+			}
 
 			document.getElementById('search').focus(); 
 			onHashChanged();

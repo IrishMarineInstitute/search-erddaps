@@ -1,6 +1,6 @@
 var ERDDAP = function(settings){
     this.settings = settings;
-	this.endpoint = settings.url;
+	this.endpoint = settings.url.replace(/\/+$/, "");;
 }
 
 var e2o = function(data){
