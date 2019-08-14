@@ -15,7 +15,7 @@
   'use strict';
 
   var defaultOptions = {
-    timeout: 5000,
+    timeout: 30000,
     jsonpCallback: 'callback',
     jsonpCallbackFunction: null
   };
