@@ -1,2 +1,8 @@
 # search-erddaps
-A GeaphQL tool for searching across instances of NOAA's Erddap data server software
+A page for searching across instances of NOAA's Erddap data server software
+
+[Try it here...](https://irishmarineinstitute.github.io/search-erddaps/#search=hourly+global+velocity+griddap)
+
+To add your ERDDAP open an issue using the link at top, or make the change yourself to erddaps.json file and open a Pull request.
+
+
