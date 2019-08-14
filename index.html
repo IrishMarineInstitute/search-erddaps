@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="viewport" content="width=device-width, shrink-to-fit=no, initial-scale=1">
+	    <meta name="description" content="Search datasets across multiple ERDDAPs">
+	    <meta name="author" content="Irish Marine Institute">
+
+    	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+   		integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+   		crossorigin=""/>
+
+	    <title>Search Erddaps</title>
+		<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+		<link rel="mask-icon" href="../safari-pinned-tab.svg" color="#5bbad5">
+		<meta name="msapplication-TileColor" content="#da532c">
+		<meta name="theme-color" content="#ffffff">
+
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
+			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<script src="fetch-jsonp.js"></script>
+	</head>
+
+	<body>
+	    <div class="container">
+	        <div class="row">
+	            <div class="col-md-12 well">
+	                <legend id="datasets">ERDDAP Dataset Discovery</legend>									
+					  <div class="form-group">
+					    <label for="search">Search Datasets</label>
+					    <input type="text" class="form-control" id="search" aria-describedby="searchHelp" placeholder="Enter some text...">
+					    <small id="searchHelp" class="form-text text-muted">Type some words about the dataset you seek, then press the green button</small>
+					  <button id="searchDatasetsButton" class="btn btn-success" onclick="searchDatasets()">Search</button>
+					  <button id="clearButton" onclick="clearSearchDatasets()" class="btn btn-info">Clear</button>
+					  </div>
+					  <div class="row" id="searchInfo"></div>
+					  <div class="row" id="searchResults"></div>
+
+	            </div>
+	    	</div>
+		</div>
+		<script src="app.js"></script>
+
+<script>
+	var getUrlSearchParams = function(){
+		if(location.hash.indexOf('?')>0){
+			return new URLSearchParams(location.hash.substring(location.hash.indexOf('?')));
+		}
+		return new URLSearchParams(location.hash?location.hash.substring(1):"");
+	}
+	var getSearchValue = function(){
+		return document.getElementById('search').value;
+	}
+		fetch("./erddaps.json").then(function(response){
+			return response.json();
+		}).then(function(erddap_list){
+			var erddaps = new ERDDAPs(erddap_list);
+			var onHashChanged = function(){
+				var urlParams = getUrlSearchParams();
+				var search = urlParams.get('search');
+				if(search && search != getSearchValue()){
+					document.getElementById('search').value = search;
+					erddaps.search(search);
+				}
+			}
+			window.addEventListener("hashchange", onHashChanged, false);
+			document.getElementById('search').onkeydown = function(e){
+				var evt = e || window.event;
+				if ( evt.keyCode === 13 ) {
+					erddaps.search(getSearchValue());
+				}
+			};
+
+			document.getElementById('search').focus(); 
+			onHashChanged();
+		}).catch((x)=>{
+			console.log("problem loading erddaps.json",x);
+		});
+		</script>
+		 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+		   integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+		   crossorigin=""></script>
+
+	</body>
+</html>
