@@ -6,7 +6,7 @@ var ERDDAP = function(settings){
 var e2o = function(data){
 	var keys = data.table.columnNames;
 	var results = [];
-	data.table.rows.forEach(row=>{
+	data.table.rows.forEach(function(row){
 		var result = [];
 		for(var i=0;i<keys.length;i++){
 			result[keys[i]] = row[i];
@@ -18,7 +18,7 @@ var e2o = function(data){
 };
 var nc_global2o = function(results){
 	var info = {};
-	results.data.forEach(x => {
+	results.data.forEach(function(x){
 		if(x["Variable Name"] == "NC_GLOBAL"){
 			info[x["Attribute Name"]] = x.Value;
 		}
@@ -27,12 +27,10 @@ var nc_global2o = function(results){
 	return info;
 }
 getDatasetInfo = function(url){
-	//console.log(url);
-	//TODO: use cache
 	return fetchJsonp(url,{jsonpCallback: ".jsonp"})
 		.then(function(response){
 			return response.json();
-		}).then(e2o).then(nc_global2o).catch((x)=>{
+		}).then(e2o).then(nc_global2o).catch(function(x){
 			console.log("no results from "+url);
 		});
 }
@@ -43,12 +41,12 @@ ERDDAP.prototype.search = function(query){
 	urlParams.set("searchFor",query);
 	urlParams.set("page",1);
 	urlParams.set("itemsPerPage",10000);
-	return fetchJsonp(url + urlParams.toString(),{jsonpCallback: ".jsonp"})
+	return fetchJsonp(url + urlParams.toString(),{  headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}, jsonpCallback: ".jsonp"})
 		.then(function(response) {
     		return response.json();
   		})
   		.then(e2o)
-  		.catch((x)=>{
+  		.catch(function(x){
 			console.log("no results from "+url);
 		});
 }
@@ -111,7 +109,7 @@ var showSearchResults = function(table,tbody,data){
 				var el = td("...");
 				el.setAttribute("colspan",4);
 				row.appendChild(el);
-				getDatasetInfo(o.Info).then((metadata)=>{
+				getDatasetInfo(o.Info).then(function(metadata){
 					var innerTable = document.createElement("table");
 					innerTable.setAttribute("class","table");
 					var email = {
@@ -186,7 +184,7 @@ var showSearchResults = function(table,tbody,data){
 						var foundExtra = false;
 						if(extras[key]){
 							var htmlLowerCase = html.toLowerCase();
-							Object.keys(extras[key]).forEach((string)=>{
+							Object.keys(extras[key]).forEach(function(string){
 								if(!foundExtra){
 									if(htmlLowerCase.indexOf(string.toLowerCase())>=0){
 										html = extras[key][string]+html;
@@ -218,7 +216,7 @@ var showSearchResults = function(table,tbody,data){
 						}
 					};
 
-					["title","institution","cdm_data_type","summary","license"].forEach((key)=>{
+					["title","institution","cdm_data_type","summary","license"].forEach(function(key){
 						addRow(key,3);
 					});
 					addPair("time_coverage_start","time_coverage_end");
@@ -226,23 +224,23 @@ var showSearchResults = function(table,tbody,data){
 					var mapDiv = false;
 					var bounds = [];
 					var point = false;
-					if(spatial.filter(s => metadata[s] !== undefined).length == spatial.length){
+					if(spatial.filter(function(s){return metadata[s] !== undefined;}).length == spatial.length){
 						bounds = [[metadata["geospatial_lat_min"],metadata["geospatial_lon_min"]],
 									  [metadata["geospatial_lat_max"],metadata["geospatial_lon_max"]]];
 						try{
-							var parsedRoundedBounds = bounds.map(x=>Math.round(parseFloat(x)*1000));
+							var parsedRoundedBounds = bounds.map(function(x){return Math.round(parseFloat(x)*1000);});
 							if(parsedRoundedBounds[0] == parsedRoundedBounds[1] && parsedRoundedBounds[2] == parsedRoundedBounds[3]){
 								point = bounds[0];
 							}
 						}catch(oh_well){};
 
 						// let's add a map.
-						Object.keys(metadata).forEach((key)=>{
+						Object.keys(metadata).forEach(function(key){
 							if(key.startsWith("geospatial_") && spatial.indexOf(key)<0)
 							spatial.push(key);
 						});
 						spatial.sort(function(a, b) {
-							var sub = (s)=> s.replace("_min","_maa");
+							var sub = function(s){return s.replace("_min","_maa");};
 							var x = sub(a);
 							var y = sub(b);
 						  if (x < y) {
@@ -254,7 +252,7 @@ var showSearchResults = function(table,tbody,data){
 						  return 0;
 						});
 						var mapRow = addRow(spatial[0]);
-						spatial.forEach((key)=>{
+						spatial.forEach(function(key){
 							addRow(key);
 						});
 						var mapCell = mapRow.insertCell(-1);
@@ -272,7 +270,7 @@ var showSearchResults = function(table,tbody,data){
 						addItem("time_coverage_end");
 					}
 
-					Object.keys(metadata).forEach((key)=>{
+					Object.keys(metadata).forEach(function(key){
 							addRow(key,3);
 					});
 					el.innerText = "";
@@ -300,7 +298,7 @@ var showSearchResults = function(table,tbody,data){
 		return el;
 	}
 	if(data && data.length){
-		data.forEach((o)=>{
+		data.forEach(function(o){
 			tbody.appendChild(tr(o));
 			//getDatasetInfo(o.Info).then(info => {
 			//	tbody.appendChild(tr(info));
@@ -322,7 +320,7 @@ var clearSearchDatasets = function(){
 	clearSearchResults();
 }
 var ERDDAPs = function(configs){
-    this.erddaps = configs.map((e)=>new ERDDAP(e));
+    this.erddaps = configs.map(function(e){return new ERDDAP(e)});
     this.searchId = 0;
 }
 ERDDAPs.prototype.search = function(query){
@@ -355,6 +353,13 @@ ERDDAPs.prototype.search = function(query){
         var tbody = document.createElement("tbody");
         table.appendChild(tbody);
         var nerddapResults = 0;
+                var showSearchResultStatus = function(){
+	                var status = nsearches?("Searching "+nsearches+" ERDDAP server"+(nsearches>1?"s":"")):("Searched "+nerddaps+" ERDDAP server"+(nerddaps>1?"s":""));
+	                var found = "found "+tbody.rows.length + " dataset"+(tbody.rows.length==1?"":"s");
+	                found += " from "+nerddapResults+" server"+(nerddapResults==1?"":"s");
+	                var timing = "total search time "+ (new Date().getTime()-starTime)+"ms.";
+	                setSearchStatus([status,found, timing].join("; "));
+                }
 
         this.erddaps.forEach(function(erddap){
             erddap.search(query).then(function(result){
@@ -368,12 +373,8 @@ ERDDAPs.prototype.search = function(query){
                     }
                     showSearchResults(table,tbody,result.data);
                 }
-                var status = nsearches?("Searching "+nsearches+" ERDDAP server"+(nsearches>1?"s":"")):("Searched "+nerddaps+" ERDDAP server"+(nerddaps>1?"s":""));
-                var found = "found "+tbody.rows.length + " dataset"+(tbody.rows.length==1?"":"s");
-                found += " from "+nerddapResults+" server"+(nerddapResults==1?"":"s");
-                var timing = "total search time "+ (new Date().getTime()-starTime)+"ms.";
-                setSearchStatus([status,found, timing].join("; "));
-            }.bind(this));
+                showSearchResultStatus();
+            }.bind(this),function(){--nsearches;showSearchResultStatus();});
         }.bind(this));
 	}
 }

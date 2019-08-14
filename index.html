@@ -22,6 +22,20 @@
 
 		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
 			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<!-- start poloyfils for explorer -->
+		<script>
+        window.Promise || document.write('<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"><\/script>');
+        window.fetch || document.write('<script src="https://unpkg.com/unfetch/polyfill"><\/script>');
+		window.URLSearchParams || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/url-search-params/1.1.0/url-search-params.js" integrity="sha256-vA5o1HRlFYggrn0yG+6bKGlnln9fWxi4S9cvzo6FlKw=" crossorigin="anonymous"><\/script>');
+
+		if (!String.prototype.startsWith) {
+ 		   String.prototype.startsWith = function(searchString, position){
+		      position = position || 0;
+		      return this.substr(position, searchString.length) === searchString;
+		  };
+		}
+		</script>
+		<!-- end polyfills -->
 		<script src="fetch-jsonp.js"></script>
 	</head>
 
@@ -80,7 +94,7 @@
 
 			document.getElementById('search').focus(); 
 			onHashChanged();
-		}).catch((x)=>{
+		}).catch(function(x){
 			console.log("problem loading erddaps.json",x);
 		});
 		</script>
