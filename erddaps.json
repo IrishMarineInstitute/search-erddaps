@@ -76,5 +76,11 @@
   },
   {
     "url": "https://upwell.pfeg.noaa.gov/erddap/"
+  },
+  {
+    "url": "http://gcoos5.geos.tamu.edu:6060/erddap/"
+  },
+  {
+    "url": "http://gcoos4.tamu.edu:8080/erddap/"
   }
 ]
