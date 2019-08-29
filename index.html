@@ -94,7 +94,7 @@
 			document.getElementById('search').focus(); 
 			onHashChanged();
 		};
-	if(awesomeErddaps !== undefined){
+	if(typeof(awesomeErddaps) !== 'undefined'){
 		runApp(awesomeErddaps);
 	}else{
 		console.log("The awesomeErddaps list was not loaded.... will try fetch possibly out-of-date backup copy");
