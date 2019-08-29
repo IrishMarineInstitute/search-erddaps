@@ -36,6 +36,7 @@
 		}
 		</script>
 		<!-- end polyfills -->
+		<script src="https://irishmarineinstitute.github.io/awesome-erddap/erddaps.js"></script>
 		<script src="fetch-jsonp.js"></script>
 	</head>
 
@@ -69,9 +70,7 @@
 	var getSearchValue = function(){
 		return document.getElementById('search').value;
 	}
-		fetch("./erddaps.json").then(function(response){
-			return response.json();
-		}).then(function(erddap_list){
+	var runApp = function(erddap_list){
 			var erddaps = new ERDDAPs(erddap_list);
 			var onHashChanged = function(){
 				var urlParams = getUrlSearchParams();
@@ -94,9 +93,17 @@
 
 			document.getElementById('search').focus(); 
 			onHashChanged();
-		}).catch(function(x){
+		};
+	if(awesomeErddaps !== undefined){
+		runApp(awesomeErddaps);
+	}else{
+		console.log("The awesomeErddaps list was not loaded.... will try fetch possibly out-of-date backup copy");
+		fetch("./erddaps.json").then(function(response){
+			return response.json();
+		}).then(runApp).catch(function(x){
 			console.log("problem loading erddaps.json",x);
 		});
+	}
 		</script>
 		 <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
 		   integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
