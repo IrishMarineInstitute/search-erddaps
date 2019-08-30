@@ -1,6 +1,6 @@
 var ERDDAP = function(settings){
     this.settings = settings;
-	this.endpoint = settings.url.replace(/\/+$/, "");;
+	this.endpoint = settings.url.replace(/\/+$/, "");
 }
 
 var e2o = function(data){
@@ -35,20 +35,32 @@ getDatasetInfo = function(url){
 		});
 }
 
-ERDDAP.prototype.search = function(query){
+ERDDAP.prototype.search = function(query,page,itemsPerPage,timeout){
+	page = page || 1;
+	itemsPerPage = itemsPerPage  || 10000;
+	timeout = timeout || this.settings.timeout || 30000;
 	var url = this.endpoint + "/search/index.json?";
 	var urlParams = new URLSearchParams("?");
 	urlParams.set("searchFor",query);
-	urlParams.set("page",1);
-	urlParams.set("itemsPerPage",10000);
-	return fetchJsonp(url + urlParams.toString(),{  headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}, jsonpCallback: ".jsonp"})
+	urlParams.set("page",page);
+	urlParams.set("itemsPerPage",itemsPerPage);
+	return fetchJsonp(url + urlParams.toString(),{ timeout: timeout, headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}, jsonpCallback: ".jsonp"})
 		.then(function(response) {
-    		return response.json();
-  		})
-  		.then(e2o)
-  		.catch(function(x){
-			console.log("no results from "+url);
-		});
+			var answer = response.json();
+			this.settings.connected = true;
+    		return answer;
+  		}.bind(this))
+  		.then(e2o);
+}
+ERDDAP.prototype.testConnect = function(){
+	this.settings.connected = false;
+	return new Promise(function(resolve,reject){
+		this.search("time",1,1,5000).then(function(){resolve(true);})
+			.catch(function(e){
+				console.log("(testConnect)",e);
+				resolve(false);
+			});
+	}.bind(this));
 }
 
 var addLinks = function(text){
@@ -315,6 +327,11 @@ var setSearchStatus = function(text){
 var clearSearchResults = function(info){
 	document.getElementById("searchResults").innerHTML = "";
 }
+var clearFilterServers = function(){
+	var filter = document.getElementById("filter");
+	filter.value = "";
+	filter.focus();
+}
 var clearSearchDatasets = function(){
     setSearchStatus("");
 	clearSearchResults();
@@ -323,17 +340,33 @@ var ERDDAPs = function(configs){
     this.erddaps = configs.map(function(e){return new ERDDAP(e)});
     this.searchId = 0;
 }
+ERDDAPs.prototype.testConnect = function(){
+	var nerddaps = this.erddaps.length;
+	var remaining = nerddaps;
+	var showTestConnectionStatus = function(){
+		document.getElementById("testConnections").innerText = "Testing "+nerddaps+" ERDDAP connections, waiting for "+ --remaining;
+	}
+	    var promises = this.erddaps.map(function(erddap){return erddap.testConnect().then(function(){
+	    	showTestConnectionStatus();
+	    })});
+	    return Promise.all(promises);
+}
 ERDDAPs.prototype.search = function(query){
 	clearSearchResults("");
     var currentSearchId = ++this.searchId;
 	if(query){
+		console.log("searching: "+query);
         var starTime = new Date().getTime();
 		var urlParams = getUrlSearchParams();
 		urlParams.set("search",query);
 		history.replaceState(null, null, document.location.pathname + '#'+urlParams.toString());
-        var nsearches = this.erddaps.length;
+		var erddaps = this.erddaps.filter(function(erddap){
+			//console.log(erddap);
+			return erddap && erddap.settings && erddap.settings.connected;
+		});
+        var nsearches = erddaps.length;
         var nerddaps = nsearches;
-        setSearchStatus("Searching "+nsearches+" erddaps");
+        setSearchStatus("Searching "+nsearches+"/"+nerddaps+" erddaps");
         var table = document.createElement("table");
         table.setAttribute("class","table");
         var thead = document.createElement("thead");
@@ -354,14 +387,14 @@ ERDDAPs.prototype.search = function(query){
         table.appendChild(tbody);
         var nerddapResults = 0;
                 var showSearchResultStatus = function(){
-	                var status = nsearches?("Searching "+nsearches+" ERDDAP server"+(nsearches>1?"s":"")):("Searched "+nerddaps+" ERDDAP server"+(nerddaps>1?"s":""));
+	                var status = nsearches?("Searching "+nsearches+"/"+nerddaps+" ERDDAP server"+(nsearches>1?"s":"")):("Searched "+nerddaps+" ERDDAP server"+(nerddaps>1?"s":""));
 	                var found = "found "+tbody.rows.length + " dataset"+(tbody.rows.length==1?"":"s");
 	                found += " from "+nerddapResults+" server"+(nerddapResults==1?"":"s");
 	                var timing = "total search time "+ (new Date().getTime()-starTime)+"ms.";
 	                setSearchStatus([status,found, timing].join("; "));
                 }
 
-        this.erddaps.forEach(function(erddap){
+        erddaps.forEach(function(erddap){
             erddap.search(query).then(function(result){
                 if(currentSearchId != this.searchId){
                     return;
@@ -374,7 +407,11 @@ ERDDAPs.prototype.search = function(query){
                     showSearchResults(table,tbody,result.data);
                 }
                 showSearchResultStatus();
-            }.bind(this),function(){--nsearches;showSearchResultStatus();});
+            }.bind(this),function(){--nsearches;showSearchResultStatus();}
+            ).catch(function(err){
+            	console.log(err);
+            	--nsearches;showSearchResultStatus();
+            });
         }.bind(this));
 	}
 }

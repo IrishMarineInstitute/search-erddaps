@@ -42,21 +42,38 @@
 
 	<body>
 	    <div class="container">
-	        <div class="row">
+	        <div class="row" id="searchArea">
 	            <div class="col-md-12 well">
 	                <legend id="datasets"><a target="_blank" href="https://coastwatch.pfeg.noaa.gov/erddap/information.html" title="find out more...">ERDDAP</a> Dataset Discovery</legend>
-					  <div class="form-group">
+	                  <div id="testConnections" style="display: block"></div>
+					  <div id="searchForm" class="form-group" style="display: none">
 					    <label for="search">Search Datasets</label>
 					    <input type="text" class="form-control" id="search" aria-describedby="searchHelp" placeholder="Enter some text...">
 					    <small id="searchHelp" class="form-text text-muted">Type some words about the dataset you seek, then press the green button</small>
-					  <button id="searchDatasetsButton" class="btn btn-success">Search</button>
-					  <button id="clearButton" onclick="clearSearchDatasets()" class="btn btn-info">Clear</button>
+					  	<button id="searchDatasetsButton" class="btn btn-success">Search</button>
+					  	<button id="clearButton" onclick="clearSearchDatasets()" class="btn btn-info">Clear</button>
 					  </div>
 					  <div class="row" id="searchInfo"></div>
 					  <div class="row" id="searchResults"></div>
 
 	            </div>
 	    	</div>
+	    	<div class="row" id="configurationArea" style="display: none">
+	            <div class="col-md-12 well">
+	            	<legend><a target="_blank" href="https://coastwatch.pfeg.noaa.gov/erddap/information.html" title="find out more...">ERDDAP</a> Server Settings</legend>
+	            					  <div class="form-group">
+					    <label for="filter">Configure Erddap Servers</label>
+					    <input type="text" class="form-control" id="filter" aria-describedby="filterHelp" placeholder="Enter some text...">
+					    <small id="filterHelp" class="form-text text-muted">Type some words to filter in the servers you seek, then press the green button</small>
+					  	<button id="filterDatasetsButton" class="btn btn-success">Filter</button>
+					  	<button id="clearButton" onclick="clearFilterServers()" class="btn btn-info">Clear</button>
+					  </div>
+					  <div class="row" id="erddapServers"></div>
+
+	         </div>
+
+	         </div>
+
 		</div>
 		<script src="app.js"></script>
 
@@ -80,7 +97,6 @@
 					erddaps.search(search);
 				}
 			}
-			window.addEventListener("hashchange", onHashChanged, false);
 			document.getElementById('search').onkeydown = function(e){
 				var evt = e || window.event;
 				if ( evt.keyCode === 13 ) {
@@ -91,8 +107,13 @@
 				erddaps.search(getSearchValue());
 			}
 
-			document.getElementById('search').focus(); 
-			onHashChanged();
+			document.getElementById('search').focus();
+			erddaps.testConnect().then(function(){
+				document.getElementById("testConnections").style.display='none';
+				document.getElementById("searchForm").style.display='block';
+				window.addEventListener("hashchange", onHashChanged, false);
+				onHashChanged();
+			});
 		};
 	if(typeof(awesomeErddaps) !== 'undefined'){
 		runApp(awesomeErddaps);
