@@ -44,7 +44,7 @@
 	    <div class="container">
 	        <div class="row" id="searchArea">
 	            <div class="col-md-12 well">
-	                <legend id="datasets"><a target="_blank" href="https://coastwatch.pfeg.noaa.gov/erddap/information.html" title="find out more...">ERDDAP</a> Dataset Discovery</legend>
+	                <legend id="datasets"><a target="_blank" href="https://coastwatch.pfeg.noaa.gov/erddap/information.html" title="find out more...">ERDDAP</a> Dataset Discovery <a href="#settings" onclick="showSettings()" title="Click to configure settings" class="float-right"><i class="fa fa-cog"></i></span></a></legend>
 	                  <div id="testConnections" style="display: block"></div>
 					  <div id="searchForm" class="form-group" style="display: none">
 					    <label for="search">Search Datasets</label>
@@ -59,19 +59,36 @@
 	            </div>
 	    	</div>
 	    	<div class="row" id="configurationArea" style="display: none">
-	            <div class="col-md-12 well">
-	            	<legend><a target="_blank" href="https://coastwatch.pfeg.noaa.gov/erddap/information.html" title="find out more...">ERDDAP</a> Server Settings</legend>
-	            					  <div class="form-group">
+	            	<legend><a target="_blank" href="https://coastwatch.pfeg.noaa.gov/erddap/information.html" title="find out more...">ERDDAP</a> Server Settings <a href="#" onclick="showSearch()" title="Click to hide settings" class="float-right"><i class="fa fa-window-close"></i></span></a></legend>
+	            	<div id="configureErddapServer" class="form-group">
 					    <label for="filter">Configure Erddap Servers</label>
 					    <input type="text" class="form-control" id="filter" aria-describedby="filterHelp" placeholder="Enter some text...">
 					    <small id="filterHelp" class="form-text text-muted">Type some words to filter in the servers you seek, then press the green button</small>
-					  	<button id="filterDatasetsButton" class="btn btn-success">Filter</button>
+					  	<button id="filterServersButton" onclick="filterServers()" class="btn btn-success">Filter</button>
 					  	<button id="clearButton" onclick="clearFilterServers()" class="btn btn-info">Clear</button>
+					  	<button id="addServerButton" onclick="showAddServerForm()" class="btn btn-primary">Add a new server...</button>
 					  </div>
-					  <div class="row" id="erddapServers"></div>
+					  <div class="col-md-12 well" id="erddapServers"></div>
 
-	         </div>
+	     </div>
 
+	         <div class="row" id="addServerForm" style="display: none">
+				<form >
+				  <div class="form-group">
+				    <label for="newServerName">Name</label>
+				      <input type="text" class="form-control" id="newServerName" placeholder="My ERRDAP Server">
+				      <small id="share" class="form-text text-muted">To share your server with others, submit to <a target="_blank" title="opens a new window" href="https://github.com/irishmarineinstitute/awesome-erddap/">awesome erddap</a></small>
+				  </div>
+				  <div class="form-group">
+				    <label for="newServerUrl">Url</label>
+				      <input type="text" class="form-control" id="newServerUrl" placeholder="http://my.erddap.server/erddap/">
+				      <small id="newServerUrlHelpBlock" class="form-text text-muted"></small>
+				  </div>
+				  <div class="form-group">
+				      <button type="button" id="addNewServerButtion" class="btn btn-success">Save</button>
+				      <button type="button" id="cancelAddNewServerButtion" onclick="hideAddServerForm()" class="btn btn-info">Cancel</button>
+				  </div>
+				</form>
 	         </div>
 
 		</div>
@@ -88,7 +105,7 @@
 		return document.getElementById('search').value;
 	}
 	var runApp = function(erddap_list){
-			var erddaps = new ERDDAPs(erddap_list);
+			var erddaps = new ERDDAPs(erddap_list,true);//true = use custom erddaps saved to local storage.
 			var onHashChanged = function(){
 				var urlParams = getUrlSearchParams();
 				var search = urlParams.get('search');
@@ -103,14 +120,25 @@
 					erddaps.search(getSearchValue());
 				}
 			};
+			document.getElementById('filter').onkeydown = function(e){
+				var evt = e || window.event;
+				if ( evt.keyCode === 13 ) {
+					filterServers();
+				}
+			};
 			document.getElementById('searchDatasetsButton').onclick = function(){
 				erddaps.search(getSearchValue());
+			}
+			document.getElementById('addNewServerButtion').onclick = function(){
+				erddaps.addNewServerFromForm();
 			}
 
 			document.getElementById('search').focus();
 			erddaps.testConnect().then(function(){
 				document.getElementById("testConnections").style.display='none';
 				document.getElementById("searchForm").style.display='block';
+				document.getElementById("erddapServers").innerHTML= "";
+				document.getElementById("erddapServers").appendChild(erddaps.settingstable());
 				window.addEventListener("hashchange", onHashChanged, false);
 				onHashChanged();
 			});
